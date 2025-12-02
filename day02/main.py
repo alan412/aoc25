@@ -1,9 +1,17 @@
 import argparse
 from collections import namedtuple
+import re
 
 Range = namedtuple('Range', ['first', 'last'])
 
+
 def is_repeat(number: int) -> bool:
+    number_str = str(number)
+    # Match if the string consists of the same sequence of digits repeated 2+ times
+    pattern = r'^(\d+)\1+$'
+    return bool(re.match(pattern, number_str))
+
+def is_repeat_pt1(number: int) -> bool:
     # return True if the number can be made up of the same sequence of digits repeated only twice
     number_str = str(number)
     size = len(number_str)
