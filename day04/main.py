@@ -27,13 +27,24 @@ def fewer_than_four_rolls(floor: dict, col: int, row: int) -> bool:
                 num_rolls += 1
     return num_rolls < 4
 
+def remove_fewer_than_four_rolls(floor: dict) -> (int, dict):
+    to_delete = {}
+    for col, row in floor:
+        if fewer_than_four_rolls(floor, col, row):
+            to_delete[(col, row)] = True
+    for col, row in to_delete:
+        del floor[(col, row)]
+    return len(to_delete), floor
+
 if __name__ == "__main__":
-    result, max_row, max_col = main()
-    print(result)
+    spaces, max_row, max_col = main()
+
     num_accessible = 0
-    for row in range(max_row + 1):
-        for col in range(max_col + 1):
-            if (col, row) in result:
-                if fewer_than_four_rolls(result, col, row):
-                    num_accessible += 1
-    print(num_accessible)
+    total = 0
+    (num_removed, spaces) = remove_fewer_than_four_rolls(spaces)
+    print(num_removed)
+    while (num_removed > 0):
+        total += num_removed
+        (num_removed, spaces) = remove_fewer_than_four_rolls(spaces)
+        print(num_removed)
+    print(total)
