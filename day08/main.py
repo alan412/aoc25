@@ -155,6 +155,35 @@ class CircuitManager:
         top_3 = heapq.nlargest(3, circuit_sizes)
         
         return top_3
+    
+    def are_all_boxes_connected(self, all_boxes: List[JunctionBox]) -> bool:
+        """
+        Check if all boxes from the given list are in a single circuit.
+        
+        Args:
+            all_boxes: List of all junction boxes that should be connected
+            
+        Returns:
+            True if all boxes are in the same circuit, False otherwise
+        """
+        if not all_boxes:
+            return True
+        
+        if len(all_boxes) == 1:
+            return True
+        
+        # Check if all boxes are in the parent dict (have been added to circuits)
+        for box in all_boxes:
+            if box not in self.parent:
+                return False
+        
+        # Check if all boxes have the same root
+        first_root = self._find(all_boxes[0])
+        for box in all_boxes[1:]:
+            if self._find(box) != first_root:
+                return False
+        
+        return True
 
 def find_closest_pairs(junction_boxes: List[JunctionBox], n: int) -> List[Tuple[Tuple[JunctionBox, JunctionBox], float]]:
     """
@@ -221,17 +250,41 @@ def main():
 if __name__ == "__main__":
     boxes = main()
     
-    # Find the 10 closest pairs
-    closest_pairs = find_closest_pairs(boxes, 1000)
+    # Find the closest pairs (using a large number to ensure we have enough)
+    closest_pairs = find_closest_pairs(boxes, 6000)
     print(f"\nFound {len(closest_pairs)} closest pairs")
     
-    # Create circuit manager and add pairs to circuits
+    # Process pairs incrementally to find when all boxes connect
     manager = CircuitManager()
-    added_count = manager.add_pairs(closest_pairs)
-    print(f"Added {added_count} pairs to circuits")
+    last_connection = None
+    
+    for (box1, box2), dist_sq in closest_pairs:
+        # Check if all boxes are connected before adding this pair
+        was_connected_before = manager.are_all_boxes_connected(boxes)
+        
+        # Add this pair to the circuit
+        manager._union(box1, box2)
+        
+        # Check if all boxes are now in a single circuit
+        is_connected_after = manager.are_all_boxes_connected(boxes)
+        
+        if not was_connected_before and is_connected_after:
+            # This is the connection that completed the circuit
+            last_connection = ((box1, box2), dist_sq)
+            distance = math.sqrt(dist_sq)
+            print(f"\nLast connection that completes the circuit:")
+            print(f"  Box 1: {box1}")
+            print(f"  Box 2: {box2}")
+            print(f"  Distance: {distance:.2f} (squared: {dist_sq})")
+            break
+    
+    # Create circuit manager and add pairs to circuits for part 1
+    manager_part1 = CircuitManager()
+    added_count = manager_part1.add_pairs(closest_pairs)
+    print(f"\nAdded {added_count} pairs to circuits")
     
     # Get the lengths of the 3 longest circuits
-    top_3_lengths = manager.get_top_3_circuit_lengths()
+    top_3_lengths = manager_part1.get_top_3_circuit_lengths()
     print(f"\nLengths of the 3 longest circuits: {top_3_lengths}")
     
     # Multiply them together for part 1 answer
